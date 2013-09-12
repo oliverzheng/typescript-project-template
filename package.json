@@ -1,0 +1,20 @@
+{
+  "name": "typescript-project-template",
+  "version": "0.0.1",
+  "description": "A starting repo for new TypeScript projects.",
+  "main": "index.js",
+  "scripts": {
+    "build": "node_modules/.bin/jake build"
+  },
+  "repository": "https://github.com/oliverzheng/typescript-project-template.git",
+  "keywords": [
+    "typescript"
+  ],
+  "author": "Oliver Zheng <npm@oliverzheng.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "jake": "~0.6.11",
+    "typescript": "~0.9.1-1",
+    "tsd": "~0.3.1"
+  }
+}
