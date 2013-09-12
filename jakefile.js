@@ -92,7 +92,7 @@ file('lib', srcFiles, {async: true}, function() {
 		fail('No source files');
 	}
 	process.stdout.write('Compiling... ');
-	var cmd = TSC + ' --module commonjs --outDir ' + LIB_DIR + ' ' + tsFiles;
+	var cmd = TSC + ' --module commonjs --outDir ' + LIB_DIR + ' ' + tsFiles.join(' ');
 	var ex = jake.createExec(cmd);
 	ex.addListener('error', function(msg) {
 		console.log(RED_COLOR + 'Failed.' + RESET_COLOR);
