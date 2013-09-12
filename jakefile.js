@@ -40,14 +40,11 @@ file('node_modules', ['package.json'], {async: true}, function() {
 	ex.run();
 })
 
+directory('d.ts');
+
 desc('Download TypeScript definitions');
-file('d.ts/typings.d.ts', ['package.json'], {async: true}, function() {
+file('d.ts/typings.d.ts', ['package.json', 'd.ts'], {async: true}, function() {
 	process.stdout.write('Downloading TypeScript definitions... ');
-	if (!deps) {
-		console.log('Done.');
-		complete();
-		return;
-	}
 	var cmd = TSD + ' install ' + deps.join(' ');
 	var ex = jake.createExec(cmd);
 	ex.addListener('error', function(msg) {
@@ -57,9 +54,13 @@ file('d.ts/typings.d.ts', ['package.json'], {async: true}, function() {
 	});
 	var fullName = this.fullName;
 	ex.addListener('cmdEnd', function() {
-		var dts = jake.readdirR('d.ts').filter(function(filename) {
-			return filename.match(/.d.ts$/) && filename != fullName;
-		});
+		try {
+			var dts = jake.readdirR('d.ts').filter(function(filename) {
+				return filename.match(/.d.ts$/) && filename != fullName;
+			});
+		} catch(e) {
+			var dts = [];
+		}
 		fs.writeFile(fullName, dts.map(function(def) {
 			return '/// <reference path="../' + def + '" />';
 		}).join('\n'), function (err) {
