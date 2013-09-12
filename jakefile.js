@@ -15,6 +15,7 @@ if (package.dependencies) {
 } else {
 	var deps = [];
 }
+deps.push('node');
 
 function touch(path) {
 	var now = parseInt(Date.now() / 1000, 10);
@@ -24,7 +25,7 @@ function touch(path) {
 desc('Node module dependencies');
 file('node_modules', ['package.json'], {async: true}, function() {
 	process.stdout.write('Npm installing... ');
-	var cmd = 'npm install ' + deps.join(' ');
+	var cmd = 'npm install';
 	var ex = jake.createExec(cmd);
 	ex.addListener('error', function(msg) {
 		console.log(RED_COLOR + 'Failed.' + RESET_COLOR);
