@@ -88,6 +88,9 @@ srcFiles.unshift('d.ts/typings.d.ts');
 
 desc('Compile source files.');
 file('lib', srcFiles, {async: true}, function() {
+	if (tsFiles.length === 0) {
+		fail('No source files');
+	}
 	process.stdout.write('Compiling... ');
 	var cmd = TSC + ' --module commonjs --outDir ' + LIB_DIR + ' ' + tsFiles;
 	var ex = jake.createExec(cmd);
