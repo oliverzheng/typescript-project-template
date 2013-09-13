@@ -85,13 +85,14 @@ file('d.ts/typings.d.ts', ['package.json', 'd.ts'], {async: true}, function() {
 	ex.run();
 });
 
+var srcTs = [];
+var testTs = [];
 try {
-	var srcTs = jake.readdirR(SRC_DIR).filter(isFileTs);
-	var testTs = jake.readdirR(TEST_DIR).filter(isFileTs);
-	var tsFiles = srcTs.concat(testTs);
+	srcTs = jake.readdirR(SRC_DIR).filter(isFileTs);
+	testTs = jake.readdirR(TEST_DIR).filter(isFileTs);
 } catch(e) {
-	var tsFiles = [];
 }
+var tsFiles = srcTs.concat(testTs);
 var srcFiles = tsFiles.slice(0);
 srcFiles.unshift('d.ts/typings.d.ts');
 
