@@ -1,13 +1,21 @@
 var path = require('path');
 var fs = require('fs');
+var fsextra = require('fs.extra');
 var jake = require('jake');
 
 var SRC_DIR = 'src';
+var TEST_DIR = 'test';
 var LIB_DIR = 'lib';
+var LIBSRC_DIR = path.join(LIB_DIR, SRC_DIR);
+var LIBTEST_DIR = path.join(LIB_DIR, TEST_DIR);
 var TSC = 'node_modules/.bin/tsc';
 var TSD = 'node_modules/.bin/tsd';
 var RED_COLOR = '\033[31m';
 var RESET_COLOR = '\033[0m';
+
+function isFileTs(path) {
+	return path.match(/.ts$/);
+}
 
 var package = require('./package.json');
 if (package.dependencies) {
@@ -78,9 +86,9 @@ file('d.ts/typings.d.ts', ['package.json', 'd.ts'], {async: true}, function() {
 });
 
 try {
-	var tsFiles = jake.readdirR(SRC_DIR).filter(function(filename) {
-		return filename.match(/.ts$/);
-	});
+	var srcTs = jake.readdirR(SRC_DIR).filter(isFileTs);
+	var testTs = jake.readdirR(TEST_DIR).filter(isFileTs);
+	var tsFiles = srcTs.concat(testTs);
 } catch(e) {
 	var tsFiles = [];
 }
@@ -88,12 +96,13 @@ var srcFiles = tsFiles.slice(0);
 srcFiles.unshift('d.ts/typings.d.ts');
 
 desc('Compile source files.');
-file('lib', srcFiles, {async: true}, function() {
+file(LIB_DIR, srcFiles, {async: true}, function() {
 	if (tsFiles.length === 0) {
 		fail('No source files');
 	}
 	process.stdout.write('Compiling... ');
-	var cmd = TSC + ' --module commonjs --outDir ' + LIB_DIR + ' ' + tsFiles.join(' ');
+	var outDir = (testTs && testTs.length > 0) ? LIB_DIR : LIBSRC_DIR;
+	var cmd = TSC + ' --module commonjs --outDir ' + outDir + ' ' + tsFiles.join(' ');
 	var ex = jake.createExec(cmd);
 	ex.addListener('error', function(msg) {
 		console.log(RED_COLOR + 'Failed.' + RESET_COLOR);
@@ -108,8 +117,39 @@ file('lib', srcFiles, {async: true}, function() {
 	ex.run();
 });
 
+
+try {
+	var testOtherFiles = jake.readdirR(TEST_DIR).filter(function(filename) {
+		var stats = fs.lstatSync(filename);
+		return !isFileTs(filename) && !stats.isDirectory();
+	});
+} catch(e) {
+	var testOtherFiles = [];
+}
+
+function testFileToLib(input) {
+	return input.replace(/^test/, LIBTEST_DIR);
+}
+var testLibFiles = testOtherFiles.map(testFileToLib);
+function testLibToFile(input) {
+	return input.replace(/^lib\/test/, TEST_DIR);
+}
+
+rule(/^lib\/test\/.*/, testLibToFile, {async: true}, function() {
+	console.log('Copying ' + this.source + '.');
+
+	jake.mkdirP(path.dirname(this.name));
+	var name = this.name;
+	fsextra.copy(this.source, this.name, function() {
+		touch(name);
+		complete();
+	});
+});
+
 desc('Build project.');
-task('build', ['node_modules', 'lib']);
+var buildDeps = ['node_modules', 'lib'];
+buildDeps.push.apply(buildDeps, testLibFiles);
+task('build', buildDeps);
 
 deleteFolderRecursive = function(path) {
 	var files = [];
@@ -128,8 +168,6 @@ deleteFolderRecursive = function(path) {
 };
 
 task('clean', function() {
-	console.log('Removing TypeScript definitions...');
-	deleteFolderRecursive('d.ts');
 	console.log('Removing compilation...');
 	deleteFolderRecursive('lib');
 	console.log('Removing binary...');
@@ -137,8 +175,11 @@ task('clean', function() {
 });
 
 task('superclean', ['clean'], function() {
+	console.log('Removing TypeScript definitions...');
+	deleteFolderRecursive('d.ts');
 	console.log('Removing node modules...');
 	deleteFolderRecursive('node_modules');
 });
+
 
 task('default', ['build']);

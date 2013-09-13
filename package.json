@@ -15,6 +15,7 @@
   "devDependencies": {
     "jake": "~0.6.11",
     "typescript": "~0.9.1-1",
-    "tsd": "~0.3.1"
+    "tsd": "~0.3.1",
+    "fs.extra": "~1.2.1"
   }
 }
